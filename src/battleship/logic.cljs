@@ -73,18 +73,39 @@
 
 (defn add-ship
   "Takes a grid and a size of a ship, returns a new grid with the ship entered
-  (i.e. :ship? set to true for the gived squares).
+  (i.e. :ship? set to true for the given squares).
   The logic: select a random point in the grid and see if the ship fits in it
   horizontally (to the right from this point), then vertically (downwards).
   If not, recur to a new point."
   [grid size]
   (let [p (get-random-point)
         horiz-ship (get-new-ship-coords p size true)
-        vert-ship (get-new-ship-coords p size false)]
+        horiz-fits? (ship-fits-grid? grid horiz-ship)
+        vert-ship (get-new-ship-coords p size false)
+        vert-fits? (ship-fits-grid? grid vert-ship)]
     (cond
-      (ship-fits-grid? grid horiz-ship) (insert-ship grid horiz-ship)
-      (ship-fits-grid? grid vert-ship) (insert-ship grid vert-ship)
+      (and horiz-fits? vert-fits?) (insert-ship grid (rand-nth [horiz-ship vert-ship]))
+      horiz-fits? (insert-ship grid horiz-ship)
+      vert-fits? (insert-ship grid vert-ship)
       :default (recur grid size))))
+
+(defn ascii-visualize
+  "Visualize the grid in the REPL."
+  [grid]
+  (mapv (fn [row]
+          (vec
+            (for [c row]
+              (if (:ship? c) "X" " "))))
+        grid))
+
+(defn every-ship-sunk?
+  "Check if a player has lost."
+  [grid]
+  (->> grid
+       flatten
+       (filter #(true? (:ship? %)))
+       (map :clicked?)
+       (every? true?)))
 
 (defn initialize-starting-situation!
   "Does what is says: initializes a grid and sets the ships randomly into it."
