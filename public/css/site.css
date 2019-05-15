@@ -1,0 +1,64 @@
+.square {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  box-sizing: border-box;
+  border: 1px solid;
+  border-left: none;
+  border-bottom: none;
+  min-width: 20px;
+}
+
+.square--big {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+}
+
+.square--small {
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+}
+
+.square--tiny {
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+}
+
+.square:first-child {
+  border-left: 1px solid;
+}
+
+.square:last-child {
+  border-right: 1px solid;
+}
+
+.horizontal-flex:last-child .square {
+  border-bottom: 1px solid;
+}
+
+.row {
+  width: 100%;
+}
+
+.horizontal-flex {
+  display: flex;
+  flex-direction: row;
+}
+
+.vertical-flex {
+  display: flex;
+  flex-direction: column;
+}
+
+.blinking {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
