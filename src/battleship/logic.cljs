@@ -35,6 +35,14 @@
                     (not= newy y))]
       (Point. newx newy))))
 
+(defn get-directly-neighboring-points
+  "Takes a point and returns the points that surround it vertically and horizontally,
+  not diagonally."
+  [p]
+  (filter (fn [{:keys [x y]}]
+            (or (= (:x p) x) (= (:y p) y)))
+          (get-neighboring-points p)))
+
 (defn get-random-point []
   (Point. (rand-int 10) (rand-int 10)))
 
@@ -107,6 +115,35 @@
        (map :clicked?)
        (every? true?)))
 
+(defn click [grid {:keys [x y] :as p}]
+  (if (:clicked? (get-cell grid p))
+    grid
+    (update-in grid [y x] assoc :clicked? true)))
+
+(defn computer-clicks
+  "The opponent (i.e. 'computer') clicks on its turn. Returns the point on which it wants to click."
+  [grid]
+  (let [clicked (mapcat (fn [row] (filterv #(true? (:clicked? %)) row)) grid)
+        next-to-hits (->> clicked
+                          (filter #(true? (:ship? %)))
+                          (mapcat get-directly-neighboring-points)
+                          distinct
+                          (filter point-in-grid?)
+                          (map (partial get-cell grid))
+                          (filter #(false? (:clicked? %))))]
+    (if (seq next-to-hits)
+      (rand-nth next-to-hits)
+      (rand-nth (mapcat (fn [row] (filterv #(false? (:clicked? %)) row)) grid)))))
+
+(defn perform-next-click!
+  "Takes the grid and returns the new situation after the 'computer opponent's' turn.
+  You can fast-forward easily by running
+  '(->> (iterate perform-next-click! grid)
+        (take 20)
+        last)'"
+  [grid]
+  (click grid (computer-clicks grid)))
+
 (defn initialize-starting-situation!
   "Does what is says: initializes a grid and sets the ships randomly into it."
   []
@@ -116,3 +153,10 @@
       g
       (recur (add-ship g (first s))
              (rest s)))))
+
+;; Development-time helpers, remove later.
+
+(defonce test-g
+  (initialize-starting-situation!))
+
+(defonce g2 (click test-g (Point. 6 9)))
