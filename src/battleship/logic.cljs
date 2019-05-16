@@ -5,7 +5,7 @@
 (defrecord Point [x y])
 
 ;; This initializes an empty grid. The grid is sized 10 x 10. Each cell stores
-;; its coordinates, whether is has been clicked or not and if it contains a ship.
+;; its coordinates, whether it has been clicked or not and if it contains a ship.
 
 (defn make-grid []
   (vec (for [y (range 10)]
@@ -37,7 +37,8 @@
 
 (defn get-directly-neighboring-points
   "Takes a point and returns the points that surround it vertically and horizontally,
-  not diagonally."
+  not diagonally. The returned points are guaranteed to be in the grid, since this
+  is checked in `get-neighboring-points`"
   [p]
   (filter (fn [{:keys [x y]}]
             (or (= (:x p) x) (= (:y p) y)))
@@ -128,7 +129,6 @@
                           (filter #(true? (:ship? %)))
                           (mapcat get-directly-neighboring-points)
                           distinct
-                          (filter point-in-grid?)
                           (map (partial get-cell grid))
                           (filter #(false? (:clicked? %))))]
     (if (seq next-to-hits)
