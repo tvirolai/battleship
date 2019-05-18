@@ -6,8 +6,13 @@
   (r/atom {:player {}
            :enemy {}
            :description "Aloita peli klikkaamalla vasemmanpuolesta ruudukkoa.
-                      Vasemmalla näkyy sinun pelilappusi."
-           :winner ""}))
+                        Vasemmalla näkyy sinun pelilappusi."
+           :winner false}))
+
+(defn reset-state! []
+  (swap! state assoc :player (l/initialize-starting-situation!)
+         :enemy (l/initialize-starting-situation!)
+         :winner false))
 
 ;; ----
 ;; UI Components
@@ -39,12 +44,12 @@
 
 (defn square
   [{:keys [x y clicked? ship?] :as p} enemy?]
-   (let [c (str "square is-vertical-center square--big"
-                (when (and ship? (or (false? enemy?) clicked?)) " has-background-primary"))]
-     ^{:key (str "key-" (gensym))}
-     [:div {:class c
-            :on-click #(click-handler p)}
-      (when clicked? [:div {:class "delete is-medium centered"}])]))
+  (let [c (str "square is-vertical-center square--big"
+               (when (and ship? (or (false? enemy?) clicked?)) " has-background-primary"))]
+    ^{:key (str "key-" (gensym))}
+    [:div {:class c
+           :on-click #(click-handler p)}
+     (when clicked? [:div {:class "delete is-medium centered"}])]))
 
 (defn row [enemy? r]
   ^{:key (str "row-" (gensym))}
@@ -67,12 +72,17 @@
    [:footer {:class "footer"}
     [:div {:class "content has-text-centered"}
      (let [{:keys [winner]} @state]
-       (if (string? winner)
-         (:description @state)
-         [:p "Peli ohi! Voittaja: "
+       (if-not winner
+         [:p (:description @state)]
+         [:div
+          [:p "Peli ohi! Voittaja: "]
           (if (= :player winner)
             [:span {:class "tag is-success"} "SINÄ!"]
-            [:span {:class "tag is-danger"} "TIETOKONE :("])]))]]])
+            [:span {:class "tag is-danger"} "TIETOKONE :("])
+          [:br]
+          [:br]
+          [:button {:on-click #(reset-state!)
+                    :class "button is-info"} "Uusi erä?"]]))]]])
 
 ;; -------------------------
 ;; Initialize app
@@ -81,6 +91,5 @@
   (r/render [home-page] (.getElementById js/document "app")))
 
 (defn init! []
-  (swap! state assoc :player (l/initialize-starting-situation!)
-         :enemy (l/initialize-starting-situation!))
+  (reset-state!)
   (mount-root))
