@@ -5,7 +5,7 @@
 (def state
   (r/atom {:player {}
            :enemy {}
-           :situation "Aloita peli klikkaamalla vasemmanpuolesta ruudukkoa.
+           :description "Aloita peli klikkaamalla vasemmanpuolesta ruudukkoa.
                       Vasemmalla näkyy sinun pelilappusi."
            :winner ""}))
 
@@ -19,12 +19,23 @@
     (if (l/every-ship-sunk? (:enemy @state))
       (swap! state assoc :winner :player)
       (when (false? (:ship? cell-to-click))
-        (let [player-state (:player @state)]
-          (swap! state assoc :player (->> player-state
-                                          l/computer-clicks
-                                          (l/click player-state)))
-          (when (l/every-ship-sunk? (:player @state))
-            (swap! state assoc :winner :enemy)))))))
+        ;; The computer gets its turn when the player's missile misses (and vice versa).
+        (loop [player-state (:player @state)
+               next-cell (->> player-state
+                              l/computer-clicks
+                              (l/get-cell player-state))]
+          (let [next-state (l/click player-state next-cell)]
+            (if (l/every-ship-sunk? next-state)
+              (swap! state assoc :player next-state
+                     :winner :enemy)
+              (if-not (:ship? next-cell)
+                (swap! state assoc :player next-state)
+                (do
+                  (swap! state assoc :player next-state)
+                  (recur next-state
+                         (->> next-state
+                              l/computer-clicks
+                              (l/get-cell next-state))))))))))))
 
 (defn square
   [{:keys [x y clicked? ship?] :as p} enemy?]
@@ -57,7 +68,7 @@
     [:div {:class "content has-text-centered"}
      (let [{:keys [winner]} @state]
        (if (string? winner)
-         (:situation @state)
+         (:description @state)
          [:p "Peli ohi! Voittaja: "
           (if (= :player winner)
             [:span {:class "tag is-success"} "SINÄ!"]
