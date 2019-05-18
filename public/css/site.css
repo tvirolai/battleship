@@ -27,6 +27,10 @@
   min-width: 6px;
 }
 
+.square--crossed {
+  content: "X"
+}
+
 .square:first-child {
   border-left: 1px solid;
 }
@@ -62,3 +66,16 @@
     opacity: 0;
   }
 }
+
+.is-vertical-center {
+  display: flex;
+  align-items: center;
+}
+
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+

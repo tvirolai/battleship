@@ -1,7 +1,8 @@
 (ns battleship.core
-  (:require [reagent.core :as r]))
+  (:require [battleship.logic :as l]
+            [reagent.core :as r]))
 
-(def state
+(defonce state
   (r/atom {:player {}
            :enemy {}}))
 
@@ -12,20 +13,31 @@
   ([] (square :normal false))
   ([size] (square size false))
   ([size filled]
-   (let [c (str "square"
+   (let [c (str "square is-vertical-center"
                 (if (= :normal size)
                   ""
                   (str " square--" (name size)))
                 (when filled " has-background-grey-light"))]
-     ^{:key (str "key-" (gensym))} [:div {:class c}])))
+     ^{:key (str "key-" (gensym))} [:div {:class c} [:div {:class "delete centered"}]])))
+
+(defn row [r]
+  ^{:key (str "row-" (gensym))}
+  [:div.row.horizontal-flex
+   (for [i r]
+     (if (:ship? i)
+       (square :big true)
+       (square :big false)))])
+
+(defn draw-grid [grid]
+  (take 10 (mapv row grid)))
 
 ;; -------------------------
 ;; Views
 
 (defn home-page []
   [:div [:h2 "Laivanupotus"]
-   (for [i (range 10)]
-     (square :normal))])
+   [:div.content (draw-grid (:player @state))]
+   [:div.content (draw-grid (:enemy @state))]])
 
 ;; -------------------------
 ;; Initialize app
@@ -34,4 +46,6 @@
   (r/render [home-page] (.getElementById js/document "app")))
 
 (defn init! []
+  (swap! state assoc :player (l/initialize-starting-situation!)
+         :enemy (l/initialize-starting-situation!))
   (mount-root))
