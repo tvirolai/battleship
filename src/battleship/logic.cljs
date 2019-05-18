@@ -1,13 +1,13 @@
-(ns battleship.logic)
+(ns battleship.logic
+  (:require [clojure.set :as s]))
 
 (defrecord Cell [x y clicked? ship?])
 
 (defrecord Point [x y])
 
-;; This initializes an empty grid. The grid is sized 10 x 10. Each cell stores
-;; its coordinates, whether it has been clicked or not and if it contains a ship.
-
 (defn make-grid []
+  "This initializes an empty grid. The grid is sized 10 x 10. Each cell stores
+  its coordinates, whether it has been clicked or not and if it contains a ship."
   (vec (for [y (range 10)]
     (vec (for [x (range 10)]
       (Cell. x y false false))))))
@@ -49,7 +49,7 @@
 
 (defn get-new-ship-coords
   "Returns a sequence of coordinates representing the ship. Takes a starting point,
-  the size of the ship and direction, which is either :horizontal or :vertical."
+  the size of the ship and direction, which is either true (= horizontal) or false (= vertical)."
   [{:keys [x y]} size horizontal?]
   (if horizontal?
     (mapv (fn [x] (Point. x y)) (range x (+ x size)))
@@ -121,6 +121,23 @@
     grid
     (update-in grid [y x] assoc :clicked? true)))
 
+(defn is-definitely-not-a-ship?
+  "There can't be ships in squares diagonally opposite a square that contains
+  a ship, since ships can't touch each other from corners. It is thus stupid
+  for the machine opponent to try these points. This predicate function can
+  be used to rule out these from the candidates for clicking."
+  [grid {:keys [x y] :as p}]
+  (let [directly-neighboring (get-directly-neighboring-points p)
+        diagonally-opposing (-> p
+                                get-neighboring-points
+                                set
+                                (s/difference (set directly-neighboring)))]
+    (->> diagonally-opposing
+         (map (partial get-cell grid))
+         (some #(and (:clicked? %)
+                     (:ship? %)))
+         boolean)))
+
 (defn computer-clicks
   "The opponent (i.e. 'computer') clicks on its turn. Returns the point on which it wants to click."
   [grid]
@@ -130,6 +147,7 @@
                           (mapcat get-directly-neighboring-points)
                           distinct
                           (map (partial get-cell grid))
+                          (remove (partial is-definitely-not-a-ship? grid))
                           (filter #(false? (:clicked? %))))]
     (if (seq next-to-hits)
       (rand-nth next-to-hits)
@@ -143,6 +161,18 @@
         last)'"
   [grid]
   (click grid (computer-clicks grid)))
+
+(defn click-until-winner [grid]
+  (->> (iterate perform-next-click! grid)
+       (take-while #(complement (every-ship-sunk? %)))
+       count))
+
+(defn clicks-to-win [grid]
+  (let [situations (iterate perform-next-click! grid)]
+    (loop [round 1]
+      (if (every-ship-sunk? (last (take round situations)))
+        (dec round) ;; The number of clicks. The starting situation is "click no 0".
+        (recur (inc round))))))
 
 (defn initialize-starting-situation!
   "Does what is says: initializes a grid and sets the ships randomly into it."
