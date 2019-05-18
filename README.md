@@ -1,23 +1,11 @@
+# Laivanupotus
 
-### Development mode
+Yksinkertainen ClojureScriptillä kirjoitettu laivanupotuspeli. Laadittu _Advanced Programming Techniques (DTEK8101)_-kurssin harjoituksena.
 
-To start the Figwheel compiler, navigate to the project folder and run the following command in the terminal:
+### Riippuvuudet
 
-```
-lein figwheel
-```
+Ohjelman kääntäminen vaatii [Leiningenin](https://leiningen.org/) ja Javan.
 
-Figwheel will automatically push cljs changes to the browser.
-Once Figwheel starts up, you should be able to open the `public/index.html` page in the browser.
+### Kääntäminen ja ajaminen
 
-### REPL
-
-The project is setup to start nREPL on port `7002` once Figwheel starts.
-Once you connect to the nREPL, run `(cljs)` to switch to the ClojureScript REPL.
-
-### Building for production
-
-```
-lein clean
-lein package
-```
+Aja `lein do clean, package` ja avaa sitten `./public/index.html` selaimessa. Kehitysmoodissa ajaminen onnistuu komennolla `lein figwheel`.

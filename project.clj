@@ -1,6 +1,6 @@
 (defproject battleship "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "A simple battleship implementation"
+  :url "http://github.com/tvirolai/battleship"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
