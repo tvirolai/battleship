@@ -167,7 +167,10 @@
        (take-while #(complement (every-ship-sunk? %)))
        count))
 
-(defn clicks-to-win [grid]
+(defn clicks-to-win
+  "This can be used to test how many moves it takes for the 'A.I' to sink all
+  the ships in the player's grid. E.g. (clicks-to-win (initialize-starting-situation!))."
+  [grid]
   (let [situations (iterate perform-next-click! grid)]
     (loop [round 1]
       (if (every-ship-sunk? (last (take round situations)))
@@ -183,10 +186,3 @@
       g
       (recur (add-ship g (first s))
              (rest s)))))
-
-;; Development-time helpers, remove later.
-
-(defonce test-g
-  (initialize-starting-situation!))
-
-(defonce g2 (click test-g (Point. 6 9)))
