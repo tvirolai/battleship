@@ -18,29 +18,26 @@
 ;; UI Components
 
 (defn click-handler [{:keys [x y clicked? ship?] :as p}]
-  (let [enemy-state (:enemy @state)
-        cell-to-click (l/get-cell enemy-state p)]
+  (let [cell-to-click (-> @state :enemy (l/get-cell p))]
     (swap! state assoc :enemy (l/click (:enemy @state) p))
     (if (l/every-ship-sunk? (:enemy @state))
       (swap! state assoc :winner :player)
-      (when (false? (:ship? cell-to-click))
+      (when-not (:ship? cell-to-click)
         ;; The computer gets its turn when the player's missile misses (and vice versa).
         (loop [player-state (:player @state)
                next-cell (->> player-state
                               l/computer-clicks
                               (l/get-cell player-state))]
-          (let [next-state (l/click player-state next-cell)]
+          (let [next-state (l/click player-state next-cell)
+                _ (swap! state assoc :player next-state)]
             (if (l/every-ship-sunk? next-state)
-              (swap! state assoc :player next-state
-                     :winner :enemy)
+              (swap! state assoc :winner :enemy)
               (if-not (:ship? next-cell)
-                (swap! state assoc :player next-state)
-                (do
-                  (swap! state assoc :player next-state)
-                  (recur next-state
-                         (->> next-state
-                              l/computer-clicks
-                              (l/get-cell next-state))))))))))))
+                nil
+                (recur next-state
+                       (->> next-state
+                            l/computer-clicks
+                            (l/get-cell next-state)))))))))))
 
 (defn square
   [{:keys [x y clicked? ship?] :as p} enemy?]

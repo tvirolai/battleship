@@ -10,7 +10,7 @@
   its coordinates, whether it has been clicked or not and if it contains a ship."
   (vec (for [y (range 10)]
     (vec (for [x (range 10)]
-      (Cell. x y false false))))))
+      (->Cell x y false false))))))
 
 (defn get-cell [grid {:keys [x y]}]
   (nth (nth grid y) x))
@@ -33,7 +33,7 @@
           newy (range (dec y) (+ 2 y))
           :when (or (not= newx x)
                     (not= newy y))]
-      (Point. newx newy))))
+      (->Point newx newy))))
 
 (defn get-directly-neighboring-points
   "Takes a point and returns the points that surround it vertically and horizontally,
@@ -45,15 +45,15 @@
           (get-neighboring-points p)))
 
 (defn get-random-point []
-  (Point. (rand-int 10) (rand-int 10)))
+  (->Point (rand-int 10) (rand-int 10)))
 
 (defn get-new-ship-coords
   "Returns a sequence of coordinates representing the ship. Takes a starting point,
   the size of the ship and direction, which is either true (= horizontal) or false (= vertical)."
   [{:keys [x y]} size horizontal?]
   (if horizontal?
-    (mapv (fn [x] (Point. x y)) (range x (+ x size)))
-    (mapv (fn [y] (Point. x y)) (range y (+ y size)))))
+    (mapv (fn [x] (->Point x y)) (range x (+ x size)))
+    (mapv (fn [y] (->Point x y)) (range y (+ y size)))))
 
 (defn ship-fits-grid?
   "Takes a grid and a ship (a sequence of points), returns true or false.
@@ -98,21 +98,12 @@
       vert-fits? (insert-ship grid vert-ship)
       :default (recur grid size))))
 
-(defn ascii-visualize
-  "Visualize the grid in the REPL."
-  [grid]
-  (mapv (fn [row]
-          (vec
-            (for [c row]
-              (if (:ship? c) "X" " "))))
-        grid))
-
 (defn every-ship-sunk?
   "Check if a player has lost."
   [grid]
   (->> grid
        flatten
-       (filter #(true? (:ship? %)))
+       (filter :ship?)
        (map :clicked?)
        (every? true?)))
 
@@ -152,30 +143,6 @@
     (if (seq next-to-hits)
       (rand-nth next-to-hits)
       (rand-nth (mapcat (fn [row] (filterv #(false? (:clicked? %)) row)) grid)))))
-
-(defn perform-next-click!
-  "Takes the grid and returns the new situation after the 'computer opponent's' turn.
-  You can fast-forward easily by running
-  '(->> (iterate perform-next-click! grid)
-        (take 20)
-        last)'"
-  [grid]
-  (click grid (computer-clicks grid)))
-
-(defn click-until-winner [grid]
-  (->> (iterate perform-next-click! grid)
-       (take-while #(complement (every-ship-sunk? %)))
-       count))
-
-(defn clicks-to-win
-  "This can be used to test how many moves it takes for the 'A.I' to sink all
-  the ships in the player's grid. E.g. (clicks-to-win (initialize-starting-situation!))."
-  [grid]
-  (let [situations (iterate perform-next-click! grid)]
-    (loop [round 1]
-      (if (every-ship-sunk? (last (take round situations)))
-        (dec round) ;; The number of clicks. The starting situation is "click no 0".
-        (recur (inc round))))))
 
 (defn initialize-starting-situation!
   "Does what is says: initializes a grid and sets the ships randomly into it."
